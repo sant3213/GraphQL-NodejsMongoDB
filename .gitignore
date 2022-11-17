@@ -131,3 +131,4 @@ dist
 
 #files
 /nodemon.json
+/node_modules
