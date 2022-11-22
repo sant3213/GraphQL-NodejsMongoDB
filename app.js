@@ -10,9 +10,33 @@ const User = require('./models/user');
 
 const app = express();
 
-const events = [];
-
 app.use(bodyParser.json());
+
+const events = eventIds => {
+    return Event.find({_id: {$in: eventIds }})
+    .then(events => {
+        return events.map(event => {
+            return { 
+                ...event._doc,
+                _id: event.id,
+                creator: user.bind(this, event.creator)
+            };
+        })
+    })
+    .catch(err => {
+        throw err;
+    })
+}
+
+const user = userId => {
+    return User.findById(userId)
+        .then(user => {
+            return { ...user._doc, _id: user.id, createdEvents: events.bind(this, user._doc.createdEvents)};
+        })
+        .catch(err => {
+            throw err;
+        })
+}
 
 // Here we define where to find our schema which defines the endpoints, which defines the queries you can handle,
 //  where to find the resolvers to which my request should be forwarded once I identify the query when request I want to execute
@@ -25,12 +49,14 @@ app.use('/graphql',
             description: String!
             price: Float!
             date: String!
+            creator: User!
         }
 
         type User {
             _id: ID!
             email: String!
             password: String
+            createdEvents: [Event!]
         }
 
         input EventInput {
@@ -63,7 +89,11 @@ app.use('/graphql',
                 return Event.find()
                     .then(events => {
                         return events.map(event => {
-                            return { ...event._doc, _id: event.id }; // mongoose can acces to the id and convert it to string with event.id
+                            return { 
+                                ...event._doc,
+                                _id: event.id,
+                                creator: user.bind(this, event._doc.creator)
+                            }; // mongoose can acces to the id and convert it to string with event.id
                         });
                     })
                     .catch(err => {

@@ -408,7 +408,7 @@ In the event.js add the property "creator" which will be the <strong>user</stron
     .
     .
     .
- date: {
+    date: {
         type: Date,
         required: true
     },
@@ -455,7 +455,65 @@ app.use('/graphql',
     .
     .`
 
-
+    .
+    .
+    .
+        createEvent: args => {
+                const event = new Event({
+                    title: args.eventInput.title,
+                    description: args.eventInput.description,
+                    price: +args.eventInput.price,
+                    date: new Date(args.eventInput.date),
+                    creator: '6377dd4fe3b034da58505dc9'
+                });
+                let createdEvent;
+                return event
+                    .save()
+                    .then(result => {
+                        createdEvent = { ...result._doc, _id: result._doc._id.toString()}
+                        return User.findById('6377dd4fe3b034da58505dc9')
+                    })
+                    .then(user => {
+                        if (!user) {
+                            throw new Error('User not found');
+                        }
+                        user.createdEvents.push(event);
+                        return user.save();
+                    })
+                    .then( result => {
+                        return createdEvent;
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        throw err;
+                    })
+            },
+            createUser: args => {
+                return User.findOne({ email: args.userInput.email })
+                    .then(user => {
+                        if (user) {
+                            throw new Error('User exists already');
+                        }
+                        return bcrypt.hash(args.userInput.password, 12);
+                    })
+                    .then(hashedPassword => {
+                        const user = new User({
+                            email: args.userInput.email,
+                            password: hashedPassword
+                        });
+                        return user.save();
+                    })
+                    .then(result => {
+                        return { ...result._doc, password: null, _id: result.id };
+                    })
+                    .catch(err => {
+                        throw err;
+                    });
+            }
+        },
+        .
+        .
+        .
 
 
 ```
@@ -481,5 +539,104 @@ mutation {
         description
     }
 }
+
+```
+
+
+<hr>
+<hr>
+<font size="3"><strong>Dynamic Relations</strong></font>
+
+So far I'm missing the relation between users and events in my mongoose models which have no direct effect on the api. So we really want to emphasize that.
+
+Add creator to event and add createdEvents property to User.
+
+```js
+    type Event {
+        _id: ID!
+        title: String!
+        description: String!
+        price: Float!
+        date: String!
+        creator: User!
+    }
+
+    type User {
+        _id: ID!
+        email: String!
+        password: String
+        createdEvents: [Event!]
+    }
+```
+
+If I try to retrieve the email with the events I'm going to get an error because the creator field in event only has the id.
+
+
+```
+query {
+    events {
+        creator {
+            email
+        }
+    }
+}
+
+```
+
+We would have to adjust the data retrieved in the events method.
+
+Populated() is a method provided by mongoose to populate any relations as knows and Mongoose knows a relation by the creator: { ...ref:'User'.. in the event model so it pulls all the extra data from our database for the given user ID which is actually stored in the creator field.
+
+```js
+    .
+    .
+    .
+ rootValue: { 
+            events: () => {
+                return Event.find()
+                .populate('creator')
+                    .then(events => {
+                        return events.map(event => {
+                            return { 
+
+    .
+    .
+    .
+
+```
+
+If I try to fetch the id
+```
+query {
+    events {
+        creator {
+            _id
+        }
+    }
+}
+
+```
+
+I'll get an error, this is related on how the id is stored and that it is this object ID which is not understood by GraphQl.
+We could fix that overwriting the creator with the id:
+
+```js
+    .
+    .
+    .
+ events: () => {
+                return Event.find()
+                .populate('creator')
+                    .then(events => {
+                        return events.map(event => {
+                            return { 
+                                ...event._doc,
+                                _id: event.id,
+                                creator: {
+                                   ...event._doc.creator._doc,
+                                   _id: event._doc.creator.id 
+                                }
+    .
+    .
 
 ```
