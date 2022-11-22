@@ -90,15 +90,12 @@ app.use('/graphql',
                         if (!user) {
                             throw new Error('User not found');
                         }
-                        console.log(event);
                         user.createdEvents.push(event);
                         return user.save();
                     })
                     .then( result => {
                         return createdEvent;
-                    }
-
-                    )
+                    })
                     .catch(err => {
                         console.log(err);
                         throw err;
