@@ -132,20 +132,20 @@ Now we create an event and this event will be taken by the RootQuery and the Roo
     .
     .
     .
- type Event {
-            _id: ID!
-            title: String!
-            description: String!
-            price: Float!
-            date: String!
+    type Event {
+        _id: ID!
+        title: String!
+        description: String!
+        price: Float!
+        date: String!
         }
 
-        type RootQuery {
-            events: [Event!]!
+    type RootQuery {
+        events: [Event!]!
         }
 
-        type RootMutation {
-            createEvent(title: String!, description: String!, price: Float!, date: String): Event
+    type RootMutation {
+        createEvent(title: String!, description: String!, price: Float!, date: String): Event
         }
 
        .
@@ -365,4 +365,121 @@ query {
         _id
     }
 }
+```
+
+
+<hr>
+<hr>
+<font size="3"><strong>Adding Relations</strong></font>
+
+Create a file named user.js
+```js
+const mongoose = require('mongoose');
+
+const Schema = mongoose.Schema;
+
+const userSchema = new Schema({
+    email: {
+        type: String,
+        required: true
+    },
+    password: {
+        type: String,
+        required: true
+    },
+    createdEvents: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: 'Event' // 
+        }
+    ]
+});
+
+mongoose.model('User', userSchema);
+
+```
+
+ref property allows me to set up a relation and let mongoose know that two models are related which will help us later to fetch data.
+We use the name of the model which we want to connect with, in this case is Event.
+
+In the event.js add the property "creator" which will be the <strong>user</strong> entity.
+
+```js
+    .
+    .
+    .
+ date: {
+        type: Date,
+        required: true
+    },
+    creator: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    }
+
+    .
+    .
+
+```
+
+Install bcryptjs to handle the user password.
+
+```
+ npm i --save bcryptjs
+```
+
+Then in the app.js add the method and the type user.
+
+```js
+    .
+    .
+    .
+app.use('/graphql',
+    graphqlHTTP({
+        schema: buildSchema(`
+        type Event {
+            _id: ID!
+            title: String!
+            description: String!
+            price: Float!
+            date: String!
+        }
+
+        input EventInput {
+            title: String!
+            description: String!
+            price: Float!
+            date: String!
+        }
+
+    .
+    .`
+
+
+
+
+```
+
+To create the user run the next lines in the graphical
+
+```js
+mutation {
+    createUser(userInput: {email: "test@gmail", password: "test"}) {
+        email
+        password
+    }
+}
+
+```
+
+To create an event run the next lines in the graphical
+
+```js
+mutation {
+    createEvent(eventInput: {title: "Testing", description: "This is a test", price: 9.99, date: "2022-11-18T16:54:29.374Z"}) {
+        title
+        description
+    }
+}
+
 ```

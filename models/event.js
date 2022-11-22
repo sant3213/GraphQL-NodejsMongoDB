@@ -12,11 +12,15 @@ const eventSchema = new Schema({
         required: true
     },
     price: {
-        type: Number // There is not Float in Javascript
+        type: Number // Tßhere is not Float in Javascript
     },
     date: {
         type: Date,
         required: true
+    },
+    creator: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
     }
 });
 
