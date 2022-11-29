@@ -624,19 +624,86 @@ We could fix that overwriting the creator with the id:
     .
     .
     .
- events: () => {
+  events: () => {
                 return Event.find()
-                .populate('creator')
                     .then(events => {
                         return events.map(event => {
                             return { 
                                 ...event._doc,
                                 _id: event.id,
-                                creator: {
-                                   ...event._doc.creator._doc,
-                                   _id: event._doc.creator.id 
-                                }
+                                creator: user.bind(this, event._doc.creator)
+                            }; // mongoose can acces to the id and convert it to string with event.id
+                        });
+                    })
+                    .catch(err => {
+                        throw err
+                    })
+            },
     .
     .
 
+```
+
+Now we can drill into this without entering an infinite loop
+
+```
+query {
+    events {
+        creator {
+            email
+            createdEvents {
+                title
+                creator {
+                    email
+                }
+            }
+        }
+    }
+}
+```
+
+```
+query {
+    events {
+        title
+        creator {
+            email
+        }
+    }
+}
+```
+
+```
+mutation {
+    createEvent(eventInput: {title:"This should now work", description: "It really should!", price:29.99, date:"2022-11-17T17:02:26.339Z"}) {
+        creator {
+            email
+        }
+    }
+}
+```
+
+After refactoring the code adding the date to the resolvers I can query with:
+
+```
+query {
+   events {
+    title
+    date
+    creator{
+      email
+      createdEvents {
+        title
+      }
+    }
+  }
+}
+```
+
+```
+mutation {
+    createUser(userInput: {email: "tests@gmail.com", password:"yester"}) {
+        _id
+    }
+}
 ```
