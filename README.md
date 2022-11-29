@@ -707,3 +707,27 @@ mutation {
     }
 }
 ```
+
+After adding the booking model and the booking resolver run the following query:
+
+```
+mutation {
+    bookEvent(eventId: "63863057eedfde6cac062f01") {
+        _id
+        createdAt
+    }
+}
+```
+
+```
+query {
+  bookings {
+    event{
+      title
+      creator{
+        email
+      }
+    }
+  }
+}
+```
