@@ -731,3 +731,234 @@ query {
   }
 }
 ```
+
+To cancel a booking
+```
+mutation {
+    cancelBooking(bookingId: "6386942405ac3151b40e6a0f") {
+      title
+    creator {
+      email
+    }
+  }
+}
+```
+
+```
+query {
+  bookings {
+    createdAt
+    event{
+      title
+      creator{
+        email
+      }
+    }
+  }
+}
+```
+
+
+<font size="4"><strong>Adding authentication</strong></font>
+
+We have to add to the schema the data we need which will be the AuthData and the login information we will need related with AuthData:
+
+```js
+type AuthData {
+        userId: ID!
+        token: String!
+        tokenExpiration: Int!
+    }
+
+type RootQuery {
+        .
+        .
+        login(email: String!, password: String!): AuthData!
+    }
+
+```
+To generate token install:
+```
+npm install --save jsonwebtoken
+```
+
+```js
+query {
+    login(email: "", password:"aaa") {
+        userId
+        token
+        tokenExpiration
+    }
+}
+
+```
+
+Trying to login in Postman.
+
+First of all configure a POST request, then in the body select raw and the type is JSON
+```
+{
+    "query": "query { login(email: \"test@gmail\", password:\"test\") { userId token tokenExpiration}}"
+}
+```
+
+
+To create an event go to Headers in Postman and set key to Authorization and in the value write Bearer followed by space and the token
+
+Baerer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Mzg0ZDEwOTM1YTljOGNjOWExYjFiNmUiLCJlbWFpbCI6InRlc3RAZ21haWwiLCJpYXQiOjE2NzAyNzQ0NTEsImV4cCI6MTY3MDI3ODA1MX0.FFT4NWBz825kT4ztU_MR1T3iRIyGsLs1dqemdDUK_5A
+```
+
+{
+    "query": "mutation { createEvent(eventInput: {title: \"Should work again\", description:\"This now works!\", price: 20.2, date: \"2022-11-17T17:02:26.339Z\"}) { _id title}}"
+}
+```
+
+We have to add a middleware which gets request, response objects and the next function and add some headers to every response that is sent back by our server because for this server I want to allow <strong>cross-origin requests</strong>.
+
+```js
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST,GET,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if ( req.method === 'OPTIONS' ) {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
+```
+
+To call the createUser endpoint from the frontend.
+
+```js
+const requestBody = {
+    query: `
+    mutation {
+        createUser(userInput: {email: "${email}", password: "${password}"}) {
+            _id
+            email
+        }
+    }
+    `
+};
+
+fetch('http://localhost: 8000/graphql', {
+    method: 'POST',
+    body: JSON.stringify(requestBody),
+    headers: {
+        'Content-Type': 'application/json'
+    }
+}).then( res => {
+    if (res.status != 200 && res.status !== 201) {
+        throw new Error('Failed!');
+    }
+    return res.json(res);
+}).then( resData => {
+    console.log(resData.data.login.token);
+}).catch(err => {
+    console.log(err);
+})
+```
+
+If we want to send a request to a login query:
+
+```js
+.
+.
+state = {
+    isLogin: true
+};
+.
+.
+
+let requestBody = {
+    query: `
+    query {
+        login(email: "${email}", password: "${password}") {
+            userId
+            token
+            tokenExpiration
+        }
+    }`
+};
+
+if (!this.state.isLogin) {
+   requestBody = {
+    query: `
+    mutation {
+        createUser(userInput: {email: "${email}", password: "${password}"}) {
+            _id
+            email
+        }
+    }
+    `
+    };
+}
+```
+
+If we want to add events from the frontend:
+```js
+const requestBody = {
+    query: `
+    mutation {
+        createEvent(eventInput: {title: "${title}", description: "${desciption}", price: ${}, date: "${date}"}) {
+            _id
+            title
+            description
+            date
+            price
+            creator {
+                _id
+                email
+            }
+        }
+    }
+    `
+};
+
+const token = this.context.token;
+
+fetch('http://localhost: 8000/graphql', {
+    method: 'POST',
+    body: JSON.stringify(requestBody),
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    }
+}).then( res => {
+    if (res.status != 200 && res.status !== 201) {
+        throw new Error('Failed!');
+    }
+    return res.json(res);
+}).then( resData => {
+    console.log(resData);
+}).catch(err => {
+    console.log(err);
+})
+```
+
+<hr>
+<hr>
+<font size="4"><strong>DataLoader</strong></font>
+
+Provide a simplified and consistent API over various remote data sources such as databases or web services <strong>via batching and caching</strong>.
+
+```
+npm install --save dataloader
+```
+
+This will be implemented in the <strong>merge.js</strong> file which is in the end where we have all the logic for drilling deeper into the resolved data, into the models.
+
+It is a batching mechanism, it makes sure that multiple requests are batched or are merged together (database), so that one bigger request descent for all the keys you need it and then this is returned and this is then split up back such that the app and the different parts of the app that requests that the different keys get their data. It speeds our API abd simply prevents duplicate requests.
+
+The DataLoader always needs an array of identifiers because it will then merge all identifiers together make a batch request that split the result up.
+
+It will fetched it but not immediately, instead in one tick of our node event loop on the backend. It will gather all requests it finds that want to get one or multiple events identified by their IDs and it will then group them together.
+
+I can use my event loader in the SingleEvent method when I'm fetching a single event. Instead of a waiting for event findById() I can use the eventLoader and there we now have a load method I can call and to load I can pass the Id.
+
+Dataloader will basically register this single event ID, then see if in the same tick of the node.js event loop our request to eventLoader with different IDs speeded one or multiple ones are sent and it will then merge all these IDs together, send the request to the database with the logic we defined by calling the events function.
+
+The results that are returned are basically split up by eventLoader again so that it knows I wanted the single ID, it will send the chunk.
+
+Change in the user method the User.findById field by userLoader.load(userId)
