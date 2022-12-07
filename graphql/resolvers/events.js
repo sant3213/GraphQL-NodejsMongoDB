@@ -30,8 +30,8 @@ module.exports = { // resolver functions which need to match our schema endpoint
         try {
             const result = await event.save();
             createdEvent = transformEvent(result);
-            const creator = await User.findById('6384d10935a9c8cc9a1b1b6e')// __doc is provided by mongoose and gives us all the core properties made that make our document, or object or event and leave all metadata
-            console.log(creator.createdEvents);
+            const creator = await User.findById(req.userId)// __doc is provided by mongoose and gives us all the core properties made that make our document, or object or event and leave all metadata
+            //console.log(creator.createdEvents);
             if (!creator) {
                 throw new Error('User not found');
             };

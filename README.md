@@ -962,3 +962,102 @@ Dataloader will basically register this single event ID, then see if in the same
 The results that are returned are basically split up by eventLoader again so that it knows I wanted the single ID, it will send the chunk.
 
 Change in the user method the User.findById field by userLoader.load(userId)
+
+
+
+<hr></hr>
+
+<hr></hr>
+<font size="5"><strong>Requests from Graphql API</strong></font>
+
+- To create an event
+    ```
+    mutation {
+        createEvent(eventInput: {title: "Testing", description: "This is a test", price: 9.99, date: "2022-11-18T16:54:29.374Z"}) {
+            title
+            description
+        }
+    }
+    ```
+
+- To create a user
+
+    ```
+    mutation {
+        createUser(userInput: {email: "test@gmail", password: "test"}) {
+            email
+            password
+        }
+    }
+    ```
+    
+- To get the token with a user.
+    
+    ```
+    query {
+        login(email: "est@gmail", password:”test”) {
+            userId
+            token
+            tokenExpiration
+        }
+    }
+    ```
+
+- To Create a booking
+    ```
+    mutation {
+        bookEvent(eventId: "6390a79019a9146bdde6857c") {
+            _id
+            createdAt
+        }
+    }
+    ```
+
+<hr></hr>
+
+<hr></hr>
+
+<font size="5"><strong>Requests from Postman</strong></font>
+
+<font size="4">Configuration</font>
+
+- POST http://localhost:3000/graphql
+- raw JSON
+- Headers
+Key: Authorization
+Value: Baerer < token >
+
+<font size="4">Requests</font>
+
+- Create an event
+
+    ```
+    {
+        "query": "mutation { createEvent(eventInput: {title: \"Should work\", description:\"This now works!\", price: 20.2, date: \"2022-11-17T17:02:26.339Z\"}) { _id title}}"
+    }
+    ```
+
+
+- Create a book
+
+    ```
+    {
+        "query": "mutation { bookEvent(eventId: \"6390a79019a9146bdde6857c\") { _id createdAt }}"
+    }
+    ```
+- Cancel Booking
+    ```
+    {
+        "query": "mutation { cancelBooking(bookingId: \"6390aa3719a9146bdde68585\") {title creator { email } }}"
+    }
+    ```
+- To Login
+    ```
+    query {
+        login(email: "test@gmail", password:"test") {
+            userId
+            token
+            tokenExpiration
+        }
+    }
+    ```
