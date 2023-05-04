@@ -57,6 +57,26 @@ The <strong>graphql</strong> package will allow us to define the schema and set 
 
 <strong>Basic graphQL Configuration</strong>
 
+The schema and root value are two essential components that help define the structure and behavior of a GraphQL API.
+
+<strong>The schema</strong> is a formal description of the API's data types, relationships, and operations that can be performed (queries, mutations, and subscriptions). It serves as a contract between the client and the server, ensuring that the server provides the data in the exact shape and form requested by the client. The schema is composed of object types, input types, scalar types, enums, interfaces, and unions.
+
+The schema has three special root types:
+
+- Query: Represents the entry point for all read operations (data fetching).
+- Mutation: Represents the entry point for all write operations (data modification).
+- Subscription: Represents the entry point for real-time updates (data subscriptions).
+
+<strong> The root value <strong/> is an object that contains the actual implementation of the resolvers for the root types (Query, Mutation, and Subscription). Resolvers are functions responsible for fetching or modifying the data corresponding to a specific field in a GraphQL operation. The root value provides the starting point for the GraphQL execution engine to begin resolving the fields in the requested operation.
+
+```js
+app.use('/graphql', graphqlHttp({
+    schema: null,
+    rootValue: {}
+}));
+```
+
+
 ```js
 const express = require('express');
 const bodyParser = require('body-parser');
