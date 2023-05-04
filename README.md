@@ -67,7 +67,7 @@ The schema has three special root types:
 - Mutation: Represents the entry point for all write operations (data modification).
 - Subscription: Represents the entry point for real-time updates (data subscriptions).
 
-<strong> The root value <strong/> is an object that contains the actual implementation of the resolvers for the root types (Query, Mutation, and Subscription). Resolvers are functions responsible for fetching or modifying the data corresponding to a specific field in a GraphQL operation. The root value provides the starting point for the GraphQL execution engine to begin resolving the fields in the requested operation.
+<strong> The root value</strong> is an object that contains the actual implementation of the resolvers for the root types (Query, Mutation, and Subscription). Resolvers are functions responsible for fetching or modifying the data corresponding to a specific field in a GraphQL operation. The root value provides the starting point for the GraphQL execution engine to begin resolving the fields in the requested operation.
 
 ```js
 app.use('/graphql', graphqlHttp({
